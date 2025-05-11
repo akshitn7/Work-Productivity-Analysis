@@ -2,3 +2,41 @@
 title: "Lifestyle Habits and Work Productivity Analysis"
 output: html_notebook
 ---
+
+```{r}
+library(tidyverse)
+data <- read_csv("data.csv")
+head(data)
+```
+```{r}
+summary(data)
+str(data)
+```
+```{r}
+colSums(is.na(data))
+```
+```{r}
+length(unique(data$Person_ID))
+```
+```{r}
+counts <- table(data$Person_ID)
+counts[counts > 3]
+```
+```{r}
+data[data$Person_ID %in% c(9989,9699),]
+```
+```{r}
+library(hms)
+
+convert_decimal_to_time <- function(time) {
+  hours <- floor(time)
+  minutes <- round((decimaltime - hours) * 60)
+  time_str <- sprintf("%02d:%02d", hours, minutes)
+  return(time_str)
+}
+data$`Sleep Start Time` <- as_hms(sapply(data$`Sleep Start Time`, convert_decimal_to_time))
+data$`Sleep End Time` <- as_hms(sapply(data$`Sleep Start Time`, convert_decimal_to_time))
+data$`Total Sleep Hours` <- round(data$`Total Sleep Hours`)
+data$`Exercise (mins/day)`
+```
+
