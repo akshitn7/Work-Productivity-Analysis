@@ -5,38 +5,155 @@ output: html_notebook
 
 ```{r}
 library(tidyverse)
-data <- read_csv("data.csv")
-head(data)
+library(ggplot2)
+df <- read_csv("data.csv")
+head(df)
 ```
+
 ```{r}
-summary(data)
-str(data)
+summary(df)
+str(df)
 ```
+
 ```{r}
-colSums(is.na(data))
+colSums(is.na(df))
 ```
+
 ```{r}
-length(unique(data$Person_ID))
+df <- df %>% rename(
+  "ID" = "Person_ID",
+  "Sleep Start" = "Sleep Start Time",
+  "Sleep End" = "Sleep End Time",
+  "Sleep Hours" = "Total Sleep Hours" ,
+  "Exercise Time" = "Exercise (mins/day)",
+  "Caffeine" = "Caffeine Intake (mg)",
+  "Screen Time" = "Screen Time Before Bed (mins)",
+  "Work Hours" = "Work Hours (hrs/day)",
+  "Prod Score" = "Productivity Score",
+  "Mood" = "Mood Score",
+  "Stress" = "Stress Level"
+)
 ```
+
 ```{r}
-counts <- table(data$Person_ID)
+length(unique(df$ID))
+```
+
+```{r}
+counts <- table(df$ID)
 counts[counts > 3]
 ```
-```{r}
-data[data$Person_ID %in% c(9989,9699),]
-```
-```{r}
-library(hms)
 
-convert_decimal_to_time <- function(time) {
-  hours <- floor(time)
-  minutes <- round((decimaltime - hours) * 60)
-  time_str <- sprintf("%02d:%02d", hours, minutes)
-  return(time_str)
-}
-data$`Sleep Start Time` <- as_hms(sapply(data$`Sleep Start Time`, convert_decimal_to_time))
-data$`Sleep End Time` <- as_hms(sapply(data$`Sleep Start Time`, convert_decimal_to_time))
-data$`Total Sleep Hours` <- round(data$`Total Sleep Hours`)
-data$`Exercise (mins/day)`
+```{r}
+df[df$ID %in% c(9989,9699),]
 ```
 
+```{r}
+df$ID <- NULL
+df$Date <- NULL
+head(df)
+```
+
+```{r}
+ggplot(df, aes(x = `Prod Score`)) +
+  geom_histogram(binwidth = 1, fill = "cyan", color = "black", alpha = 0.5) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(
+    title = "Productivity Score",
+    x = "Productivity Score",
+    y = "Frequency"
+  )
+```
+
+```{r}
+df <- df %>%
+  mutate(`Riser Type` = case_when(
+    `Sleep Hours` < 5.5 ~ "Sleep Deficit",
+    `Sleep End` < 7 ~ "Early Riser",
+    TRUE ~ "Late Riser"
+  ))
+head(df)
+```
+
+```{r}
+library(ggplot2)
+
+# Create the boxplot
+ggplot(df, aes(x = `Riser Type`, y = `Prod Score`, fill = `Riser Type`)) +
+  geom_boxplot(alpha = 0.8) +
+  labs(title = "Productivity Score by Riser Type",
+       x = "Riser Type",
+       y = "Productivity Score")
+```
+
+```{r}
+#extracting data
+early_riser_data <- df[df$`Riser Type` == "Early Riser", "Prod Score"]
+late_riser_data <- df[df$`Riser Type` == "Late Riser", "Prod Score"]
+
+# Run t-test
+t_test_result <- t.test(early_riser_data, late_riser_data)
+
+# Print the result
+print(t_test_result)
+```
+
+```{r}
+df <- df %>%
+  mutate(`Sleep Type` = case_when(
+    `Sleep Hours` < 5.5 ~ "Sleep Deficit",
+    TRUE ~ "Adequate Sleep"
+  ))
+head(df)
+```
+
+```{r}
+# Create the boxplot
+ggplot(df, aes(x = `Sleep Type`, y = `Prod Score`, fill = `Sleep Type`)) +
+  geom_boxplot(alpha = 0.8) +
+  labs(title = "Productivity Score by Sleep Type",
+       x = "Sleep Type",
+       y = "Productivity Score")
+```
+
+```{r}
+#extracting data
+adq_sleep_data <- df[df$`Sleep Type` == "Adequate Sleep", "Prod Score"]
+sleep_deficit_data <- df[df$`Sleep Type` == "Sleep Deficit", "Prod Score"]
+print("Variance in adequate Sleep Data:")
+var(adq_sleep_data$`Prod Score`)
+print("Variance in Sleep deficit Data:", var(sleep_deficit_data$`Prod Score`))
+var(sleep_deficit_data$`Prod Score`)
+```
+
+```{r}
+# Run t-test
+t_test_result <- t.test(adq_sleep_data, sleep_deficit_data)
+
+# Print the result
+print(t_test_result)
+```
+
+```{r}
+df <- df %>%
+  mutate(`Age Group` = case_when(
+    `Age` <= 32 ~ "Young Adult",
+    `Age` <= 46 ~ "Prime Adult",
+    TRUE ~ "Mature Adult"
+  ))
+head(df)
+```
+
+```{r}
+# Create the boxplot
+ggplot(df, aes(x = `Age Group`, y = `Prod Score`, fill = `Age Group`)) +
+  geom_boxplot(alpha = 0.8) +
+  labs(title = "Productivity Score by Age Group",
+       x = "Age Group",
+       y = "Productivity Score")
+```
+
+```{r}
+anova_result <- aov(`Prod Score` ~ `Age Group`, data = df)
+summary(anova_result)
+```
