@@ -34,6 +34,9 @@ df <- df %>% rename(
   "Stress" = "Stress Level"
 )
 ```
+```{r}
+df <- df[df$Gender != "Other", ]
+```
 
 ```{r}
 length(unique(df$ID))
@@ -45,7 +48,7 @@ counts[counts > 3]
 ```
 
 ```{r}
-df[df$ID %in% c(9989,9699),]
+df[df$ID %in% c(5597),]
 ```
 
 ```{r}
@@ -61,6 +64,54 @@ ggplot(df, aes(x = `Prod Score`)) +
   labs(
     title = "Productivity Score",
     x = "Productivity Score",
+    y = "Frequency"
+  )
+```
+```{r}
+ggplot(df, aes(x = `Age`)) +
+  geom_histogram(binwidth = 1, fill = "pink", color = "black", alpha = 0.5) +
+  labs(
+    title = "Age",
+    x = "Age",
+    y = "Frequency"
+  )
+```
+```{r}
+ggplot(df, aes(x = `Gender`)) +
+  geom_histogram(stat = "count", fill = "purple", color = "black", alpha = 0.5) +
+  labs(
+    title = "Gender",
+    x = "Gender",
+    y = "Frequency"
+  )
+```
+```{r}
+ggplot(df, aes(x = `Sleep Quality`)) +
+  geom_histogram(binwidth = 1, fill = "green", color = "black", alpha = 0.5) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(
+    title = "Sleep Quality",
+    x = "Sleep Quality",
+    y = "Frequency"
+  )
+```
+```{r}
+ggplot(df, aes(x = `Mood`)) +
+  geom_histogram(binwidth = 1, fill = "yellow", color = "black", alpha = 0.5) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(
+    title = "Mood",
+    x = "Mood",
+    y = "Frequency"
+  )
+```
+```{r}
+ggplot(df, aes(x = `Stress`)) +
+  geom_histogram(binwidth = 1, fill = "red", color = "black", alpha = 0.5) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(
+    title = "Stress Level",
+    x = "Stress Level",
     y = "Frequency"
   )
 ```
@@ -90,7 +141,6 @@ ggplot(df, aes(x = `Riser Type`, y = `Prod Score`, fill = `Riser Type`)) +
 #extracting data
 early_riser_data <- df[df$`Riser Type` == "Early Riser", "Prod Score"]
 late_riser_data <- df[df$`Riser Type` == "Late Riser", "Prod Score"]
-
 # Run t-test
 t_test_result <- t.test(early_riser_data, late_riser_data)
 
