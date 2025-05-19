@@ -34,9 +34,6 @@ df <- df %>% rename(
   "Stress" = "Stress Level"
 )
 ```
-```{r}
-df <- df[df$Gender != "Other", ]
-```
 
 ```{r}
 length(unique(df$ID))
@@ -52,8 +49,7 @@ df[df$ID %in% c(5597),]
 ```
 
 ```{r}
-df$ID <- NULL
-df$Date <- NULL
+df <- df %>% select(-`ID`, -`Date`)
 head(df)
 ```
 
@@ -62,148 +58,136 @@ ggplot(df, aes(x = `Prod Score`)) +
   geom_histogram(binwidth = 1, fill = "cyan", color = "black", alpha = 0.5) +
   scale_x_continuous(breaks = 1:10) +
   labs(
-    title = "Productivity Score",
-    x = "Productivity Score",
-    y = "Frequency"
-  )
+    title = "Productivity Score", x = "Productivity Score", y = "Frequency")
 ```
 ```{r}
 ggplot(df, aes(x = `Age`)) +
   geom_histogram(binwidth = 1, fill = "pink", color = "black", alpha = 0.5) +
-  labs(
-    title = "Age",
-    x = "Age",
-    y = "Frequency"
-  )
+  labs(title = "Age", x = "Age", y = "Frequency")
+```
+```{r}
+ggplot(df, aes(x = `Sleep Hours`)) +
+  geom_histogram(binwidth = 1, fill = "orange", color = "black", alpha = 0.5) +
+  labs(title = "Sleep Hours", x = "Sleep Hours", y = "Frequency")
 ```
 ```{r}
 ggplot(df, aes(x = `Gender`)) +
   geom_histogram(stat = "count", fill = "purple", color = "black", alpha = 0.5) +
-  labs(
-    title = "Gender",
-    x = "Gender",
-    y = "Frequency"
-  )
+  labs(title = "Gender", x = "Gender", y = "Frequency")
 ```
 ```{r}
 ggplot(df, aes(x = `Sleep Quality`)) +
   geom_histogram(binwidth = 1, fill = "green", color = "black", alpha = 0.5) +
   scale_x_continuous(breaks = 1:10) +
-  labs(
-    title = "Sleep Quality",
-    x = "Sleep Quality",
-    y = "Frequency"
-  )
+  labs(title = "Sleep Quality", x = "Sleep Quality", y = "Frequency")
 ```
 ```{r}
 ggplot(df, aes(x = `Mood`)) +
   geom_histogram(binwidth = 1, fill = "yellow", color = "black", alpha = 0.5) +
   scale_x_continuous(breaks = 1:10) +
-  labs(
-    title = "Mood",
-    x = "Mood",
-    y = "Frequency"
-  )
+  labs(title = "Mood", x = "Mood", y = "Frequency")
 ```
 ```{r}
 ggplot(df, aes(x = `Stress`)) +
   geom_histogram(binwidth = 1, fill = "red", color = "black", alpha = 0.5) +
   scale_x_continuous(breaks = 1:10) +
-  labs(
-    title = "Stress Level",
-    x = "Stress Level",
-    y = "Frequency"
-  )
+  labs(title = "Stress Level", x = "Stress Level",y = "Frequency")
 ```
 
+```{r}
+ggplot(df, aes(x = `Mood`, y = `Stress`)) +
+  geom_point(color="red", size = 3) +
+  scale_x_continuous(breaks = 1:10) +
+  labs(title = "Mood v/s Stress", x = "Mood", y = "Stress")
+```
+```{r}
+library(ggcorrplot)
+corr_mat = round(cor(df[sapply(df, is.numeric)]),1)
+ggcorrplot(corr_mat, lab = TRUE)
+```
+```{r}
+ggplot(df, aes(x = `Work Hours`, y = `Prod Score`)) +
+  geom_point(col = 'green') +
+  geom_smooth(method = "loess", col = 'red')
+```
+```{r}
+df$`Work Hours` = round(df$`Work Hours`)
+df_summary <- df %>%
+  group_by(`Work Hours`) %>%
+  summarise(mean_prod = mean(`Prod Score`, na.rm = TRUE))
+
+# Plot
+ggplot(df_summary, aes(x = `Work Hours`, y = mean_prod)) +
+  geom_line(color = "green") +
+  geom_point(color = "red") +
+  labs(title = "Mean Productivity Score by Age",
+       x = "Age",
+       y = "Mean Productivity Score")
+```
+```{r}
+df_summary <- df %>%
+  group_by(`Age`) %>%
+  summarise(mean_prod = mean(`Prod Score`, na.rm = TRUE))
+
+# Plot
+ggplot(df_summary, aes(x = `Age`, y = mean_prod)) +
+  geom_line(color = "green") +
+  geom_point(color = "red") +
+  labs(title = "Mean Productivity Score by Age",
+       x = "Age",
+       y = "Mean Productivity Score")
+```
+```{r}
+df$Caffeine = round((df$Caffeine / 10)) * 10
+df_summary <- df %>%
+  group_by(`Caffeine`) %>%
+  summarise(mean_prod = mean(`Prod Score`, na.rm = TRUE))
+ggplot(df_summary, aes(x = `Caffeine`, y = mean_prod)) +
+  geom_line(color = "green") +
+  geom_point(color = "red") +
+  labs(title = "Productivity Score by Caffeine Intake",
+       x = "Caffeine",
+       y = "Mean Productivity Score")
+```
+```{r}
+df_summary <- df %>%
+  group_by(`Caffeine`) %>%
+  summarise(mean_sleep_duration = mean(`Sleep Hours`, na.rm = TRUE))
+ggplot(df_summary, aes(x = `Caffeine`, y = mean_sleep_duration)) +
+  geom_line(color = "green") +
+  geom_point(color = "red") +
+  labs(title = "Sleep Hours by Caffeine Intake",
+       x = "Caffeine",
+       y = "Mean Sleep Hours")
+```
+Hypothesis Testing:
+ 
+H0: Mean productivity of people sleeping <5 hrs is not < Overall average productivity
+
+H1: Mean productivity of people sleeping <5 hrs < Overall average productivity
+```{r}
+sleep_less_than_5 <- subset(df, df$`Sleep Hours` < 5)
+t.test(sleep_less_than_5$`Prod Score`, mu = mean(df$`Prod Score`), alternative = 'less')
+```
+H0: Mean productivity (sleep >5 hrs) = Mean productivity (sleep <5 hrs)
+
+H1: Mean productivity (sleep >5 hrs) > Mean productivity (sleep <5 hrs)
+```{r}
+more_than_5 = subset(df, df$`Sleep Hours`>5)
+less_than_5 = subset(df, df$`Sleep Hours`<5)
+t.test(more_than_5$`Prod Score`, less_than_5$`Prod Score`, var.equal = TRUE, alternative = 'greater')
+```
+ 
 ```{r}
 df <- df %>%
   mutate(`Riser Type` = case_when(
-    `Sleep Hours` < 5.5 ~ "Sleep Deficit",
+    `Sleep End` < 4 ~ "Sleep Disorder",
     `Sleep End` < 7 ~ "Early Riser",
     TRUE ~ "Late Riser"
   ))
-head(df)
-```
-
-```{r}
-library(ggplot2)
-
-# Create the boxplot
-ggplot(df, aes(x = `Riser Type`, y = `Prod Score`, fill = `Riser Type`)) +
-  geom_boxplot(alpha = 0.8) +
-  labs(title = "Productivity Score by Riser Type",
-       x = "Riser Type",
-       y = "Productivity Score")
-```
-
-```{r}
-#extracting data
-early_riser_data <- df[df$`Riser Type` == "Early Riser", "Prod Score"]
-late_riser_data <- df[df$`Riser Type` == "Late Riser", "Prod Score"]
-# Run t-test
-t_test_result <- t.test(early_riser_data, late_riser_data)
-
-# Print the result
-print(t_test_result)
-```
-
-```{r}
-df <- df %>%
-  mutate(`Sleep Type` = case_when(
-    `Sleep Hours` < 5.5 ~ "Sleep Deficit",
-    TRUE ~ "Adequate Sleep"
-  ))
-head(df)
-```
-
-```{r}
-# Create the boxplot
-ggplot(df, aes(x = `Sleep Type`, y = `Prod Score`, fill = `Sleep Type`)) +
-  geom_boxplot(alpha = 0.8) +
-  labs(title = "Productivity Score by Sleep Type",
-       x = "Sleep Type",
-       y = "Productivity Score")
-```
-
-```{r}
-#extracting data
-adq_sleep_data <- df[df$`Sleep Type` == "Adequate Sleep", "Prod Score"]
-sleep_deficit_data <- df[df$`Sleep Type` == "Sleep Deficit", "Prod Score"]
-print("Variance in adequate Sleep Data:")
-var(adq_sleep_data$`Prod Score`)
-print("Variance in Sleep deficit Data:", var(sleep_deficit_data$`Prod Score`))
-var(sleep_deficit_data$`Prod Score`)
-```
-
-```{r}
-# Run t-test
-t_test_result <- t.test(adq_sleep_data, sleep_deficit_data)
-
-# Print the result
-print(t_test_result)
-```
-
-```{r}
-df <- df %>%
-  mutate(`Age Group` = case_when(
-    `Age` <= 32 ~ "Young Adult",
-    `Age` <= 46 ~ "Prime Adult",
-    TRUE ~ "Mature Adult"
-  ))
-head(df)
-```
-
-```{r}
-# Create the boxplot
-ggplot(df, aes(x = `Age Group`, y = `Prod Score`, fill = `Age Group`)) +
-  geom_boxplot(alpha = 0.8) +
-  labs(title = "Productivity Score by Age Group",
-       x = "Age Group",
-       y = "Productivity Score")
-```
-
-```{r}
-anova_result <- aov(`Prod Score` ~ `Age Group`, data = df)
+anova_result <- aov(df$`Prod Score` ~ df$`Riser Type`, data = df)
 summary(anova_result)
+```
+```{r}
+TukeyHSD(anova_result)
 ```
