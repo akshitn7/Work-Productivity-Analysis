@@ -1,0 +1,8 @@
+A corporate wellness program can use this model to:
+
+Recommend personalized lifestyle changes to boost employee well-being.
+
+Predict burnout or dips in performance.
+
+Set alerts if someone's data signals poor mental health trends.
+
