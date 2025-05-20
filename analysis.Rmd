@@ -93,101 +93,66 @@ ggplot(df, aes(x = `Stress`)) +
   scale_x_continuous(breaks = 1:10) +
   labs(title = "Stress Level", x = "Stress Level",y = "Frequency")
 ```
-
 ```{r}
-ggplot(df, aes(x = `Mood`, y = `Stress`)) +
-  geom_point(color="red", size = 3) +
-  scale_x_continuous(breaks = 1:10) +
-  labs(title = "Mood v/s Stress", x = "Mood", y = "Stress")
+ggplot(df, aes(x = `Exercise Time`)) +
+  geom_histogram(binwidth = 10, fill = "blue", color = "black", alpha = 0.5) +
+  labs(title = "Exercise Time", x = "Exercise Time",y = "Frequency")
 ```
 ```{r}
 library(ggcorrplot)
 corr_mat = round(cor(df[sapply(df, is.numeric)]),1)
 ggcorrplot(corr_mat, lab = TRUE)
 ```
-```{r}
-ggplot(df, aes(x = `Work Hours`, y = `Prod Score`)) +
-  geom_point(col = 'green') +
-  geom_smooth(method = "loess", col = 'red')
-```
-```{r}
-df$`Work Hours` = round(df$`Work Hours`)
-df_summary <- df %>%
-  group_by(`Work Hours`) %>%
-  summarise(mean_prod = mean(`Prod Score`, na.rm = TRUE))
+No correlation between features so predictive modelling is not possible. We can only generate inference about the population using given sample dataset.
+We will be using Different Hypothesis testing method to test some hypothesis about the population.
 
-# Plot
-ggplot(df_summary, aes(x = `Work Hours`, y = mean_prod)) +
-  geom_line(color = "green") +
-  geom_point(color = "red") +
-  labs(title = "Mean Productivity Score by Age",
-       x = "Age",
-       y = "Mean Productivity Score")
-```
-```{r}
-df_summary <- df %>%
-  group_by(`Age`) %>%
-  summarise(mean_prod = mean(`Prod Score`, na.rm = TRUE))
+One Sample T-Test:
+1.) H0: Average sleep quality is 7.
+    Ha: Average sleep quality is not equal to 7
+2.) H0: Average productivity score is 7
+    Ha: Average productivity score is not equal to 7
 
-# Plot
-ggplot(df_summary, aes(x = `Age`, y = mean_prod)) +
-  geom_line(color = "green") +
-  geom_point(color = "red") +
-  labs(title = "Mean Productivity Score by Age",
-       x = "Age",
-       y = "Mean Productivity Score")
-```
+Two Sample T-Test:
+1.) H0: There is no difference in average sleep quality of males and females.
+    Ha: There is difference in average sleep quality of males and females.
+2.) H0: There is no difference in average work hours between individuals with low stress and those with high stress.
+    Ha: There is difference in average work hours between individuals with low stress and those with high stress.
+    
+ANOVA:
+1.) H0: Productivity Score is same across different age group
+    Ha: Productivity Score is different across different age group
+2.) H0: Productivity Score is same across different stress levels
+    Ha: Productivity Score is different across different stress levels
+   
+   
+   
+One Sample T-Test:
+H0: Average sleep quality is 7.
+Ha: Average sleep quality is not equal to 7
 ```{r}
-df$Caffeine = round((df$Caffeine / 10)) * 10
-df_summary <- df %>%
-  group_by(`Caffeine`) %>%
-  summarise(mean_prod = mean(`Prod Score`, na.rm = TRUE))
-ggplot(df_summary, aes(x = `Caffeine`, y = mean_prod)) +
-  geom_line(color = "green") +
-  geom_point(color = "red") +
-  labs(title = "Productivity Score by Caffeine Intake",
-       x = "Caffeine",
-       y = "Mean Productivity Score")
+t_test_sleep_quality <- t.test(df$`Sleep Quality`, mu = 7)
+print("Sleep Quality T Test")
+print(t_test_sleep_quality)
 ```
+H0: Average productivity score is 7
+Ha: Average productivity score is not equal to 7
 ```{r}
-df_summary <- df %>%
-  group_by(`Caffeine`) %>%
-  summarise(mean_sleep_duration = mean(`Sleep Hours`, na.rm = TRUE))
-ggplot(df_summary, aes(x = `Caffeine`, y = mean_sleep_duration)) +
-  geom_line(color = "green") +
-  geom_point(color = "red") +
-  labs(title = "Sleep Hours by Caffeine Intake",
-       x = "Caffeine",
-       y = "Mean Sleep Hours")
+t_test_prod_score <- t.test(df$`Prod Score`, mu = 7)
+print("Productivity Score T Test")
+print(t_test_prod_score)
 ```
-Hypothesis Testing:
- 
-H0: Mean productivity of people sleeping <5 hrs is not < Overall average productivity
+H0: There is no difference in average sleep quality of males and females.
+Ha: There is difference in average sleep quality of males and females.
+```{r}
+male_df <- subset(df, `Gender` == "Male", select = `Sleep Quality`)
+female_df <- subset(df, `Gender` == "Female", select = `Sleep Quality`)
+t_test_gender_sleep <- t.test(male_df$`Sleep Quality`, female_df$`Sleep Quality`, var.equal = TRUE)
+print("Gender's Sleep Quality T-Test")
+print(t_test_gender_sleep)
+```
+H0: There is no difference in average work hours between individuals with low stress and those with high stress.
+    Ha: There is difference in average work hours between individuals with low stress and those with high stress.
+```{r}
 
-H1: Mean productivity of people sleeping <5 hrs < Overall average productivity
-```{r}
-sleep_less_than_5 <- subset(df, df$`Sleep Hours` < 5)
-t.test(sleep_less_than_5$`Prod Score`, mu = mean(df$`Prod Score`), alternative = 'less')
 ```
-H0: Mean productivity (sleep >5 hrs) = Mean productivity (sleep <5 hrs)
 
-H1: Mean productivity (sleep >5 hrs) > Mean productivity (sleep <5 hrs)
-```{r}
-more_than_5 = subset(df, df$`Sleep Hours`>5)
-less_than_5 = subset(df, df$`Sleep Hours`<5)
-t.test(more_than_5$`Prod Score`, less_than_5$`Prod Score`, var.equal = TRUE, alternative = 'greater')
-```
- 
-```{r}
-df <- df %>%
-  mutate(`Riser Type` = case_when(
-    `Sleep End` < 4 ~ "Sleep Disorder",
-    `Sleep End` < 7 ~ "Early Riser",
-    TRUE ~ "Late Riser"
-  ))
-anova_result <- aov(df$`Prod Score` ~ df$`Riser Type`, data = df)
-summary(anova_result)
-```
-```{r}
-TukeyHSD(anova_result)
-```
